@@ -33,15 +33,16 @@ public class HdfsProducer {
 			Path pt = new Path(uri);
 			BufferedReader br=new BufferedReader(new InputStreamReader(hdfs.open(pt)));
 			String line;
-			//System.out.println("Hello World");
-			//System.out.println("\n Successfully read hadoop file");
+			
 			line=br.readLine();
-			int count = 0;
-			while (line != null && count < 5){
-				//System.out.println(line);
+			int count = 1;
+			while (line != null){
+			//while (line != null){
+				System.out.println("Sending batch" + count);
 				producer.send(new ProducerRecord<String, String>(topicName, new String(line)));
 				line=br.readLine();
 				count = count+1;
+				
 			}
 			
 			producer.close();
@@ -56,7 +57,7 @@ public class HdfsProducer {
 				Properties props = new Properties();
 
 				//Assign localhost id
-				props.put("bootstrap.servers", "localhost:9092");
+				props.put("bootstrap.servers", "localhost:9093");
 
 				//Set acknowledgements for producer requests.      
 				props.put("acks", "all");
@@ -68,7 +69,7 @@ public class HdfsProducer {
 				props.put("batch.size", 16384);
 
 				//Reduce the no of requests less than 0   
-				props.put("linger.ms", 1);
+				props.put("linger.ms", 5);
 
 				//The buffer.memory controls the total amount of memory available to the producer for buffering.   
 				props.put("buffer.memory", 33554432);
