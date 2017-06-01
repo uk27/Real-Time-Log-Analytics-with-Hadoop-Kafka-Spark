@@ -97,9 +97,10 @@ public class SparkConsumer {
 	    			
 	    			//If we find something, we store it in results dir on hdfs
 	    			if(iprdd.count() > 0)
-	    				iprdd.saveAsTextFile("hdfs://quickstart.cloudera:8020/results/");
-	    			
-	    			System.out.println("\n-------------Resuts successfully written to /results on hdfs-------------\n");
+				{
+					iprdd.saveAsTextFile("hdfs://quickstart.cloudera:8020/results/");
+	    				System.out.println("\n-------------Resuts successfully written to /results on hdfs-------------\n");
+				}	
 	    		}        
 	        
 	    });
