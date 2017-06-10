@@ -42,10 +42,10 @@ public class SparkConsumer {
 	private static Function2<Integer, Integer, Integer> MyReducerFunc = (a, b) -> a + b;
 	
 	public static void main(String[] args) throws Exception {
-	    if (args.length < 2) {
-	      System.err.println("Usage: SparkConsumer <brokers> <topics>\n" +
+	    if (args.length < 3) {
+	      System.err.println("Usage: SparkConsumer <brokers> <topic Pattern> <groupid>\n" +
 	          "  <brokers> is a list of one or more Kafka brokers\n" +
-	          "  <topic pattern> e.g. topicx will consume topics like topic-1, topic-99, etc\n\n" +
+	          "  <topic pattern> e.g. topicx will consume topics like topicx-1, topicx-99, etc\n\n" +
 	          "	 <groupid>");
 	      System.exit(1);
 	    }
@@ -98,37 +98,39 @@ public class SparkConsumer {
 	    	
 	    	long numHits = rdd.count();
 	    	System.out.println("Number of partitions fetched: " + rdd.partitions().size());
+            
 	    	if(numHits < 1500)
 	    		System.out.println("No new data fetched in last 30 sec");
 	    	
 	    	//Do Processing
 	    	else{
-
-	    			/*System.out.println("\n\n---------------------------Data fetched in the last 30 seconds: " + rdd.partitions().size()
-	    					+ " partitions and " + numHits  + " records------------------\n\n");
-	        */
-	    			//Convert to java log object	
-	    			JavaRDD<ApacheAccessLog> logs = rdd.map(x-> x._2)
-					.map(ApacheAccessLog::parseFromLogLine)
-						.cache();
+                    //Convert to java log object
+	    			JavaRDD<ApacheAccessLog> logs =
+                                rdd.map(x-> x._2)
+                                .map(ApacheAccessLog::parseFromLogLine)
+                                .cache();
 	        
 	    			//Find the bot ip addresses
-	    			JavaRDD<String> iprdd =  logs.mapToPair(ip-> new Tuple2<>(ip.getIpAddress(),1))
-	    					.reduceByKey(MyReducerFunc)
-	    						.filter(botip-> botip._2 > 50)
-	    							.keys();
+	    			JavaRDD<String> iprdd =
+                                logs.mapToPair(ip-> new Tuple2<>(ip.getIpAddress(),1))
+                                .reduceByKey(MyReducerFunc)
+                                .filter(botip-> botip._2 > 50)
+                                .keys();
 	    			
 	    			//If we find something, we store it in results dir on hdfs
 	    			long botIpCount = iprdd.count();
 	    			if(botIpCount > 0)
 	    			{
+                        //Set file configuration for hdfs
 	    				sc.hadoopConfiguration().set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
 	    				sc.hadoopConfiguration().set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
 	    				
 	    				String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+                    
 	    				iprdd.coalesce(1).saveAsTextFile("hdfs://quickstart.cloudera:8020/results/"+timeStamp);
-	    				JobConf jobConf=new JobConf();
-	    				        System.out.println("\n---------"+botIpCount+" Bot Ips were detected.--------- \n---------Please see /results for details---------\n");
+                        
+                        System.out.println("\n---------"+botIpCount+" Bot Ips were detected---------");
+                        System.out.println("\n---------Please see /results for details---------\n");
 	    			}
 	    				
 	    		}        
@@ -136,7 +138,6 @@ public class SparkConsumer {
 	    });
 	    
 	   
-	  
 	    jssc.start();
 	    jssc.awaitTermination();
 }
