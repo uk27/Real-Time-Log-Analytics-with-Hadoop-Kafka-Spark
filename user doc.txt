@@ -1,0 +1,34 @@
+Prereqs:
+1) Servers running on respective ports
+
+	sudo /usr/lib/kafka/bin/kafka-server-start.sh /usr/lib/kafka/config/server-1.properties
+
+2) Topic is created of a pattern like topicName-1, topicName-2 to identify different topics of the same logical topic.
+
+	/usr/lib/kafka/bin/kafka-topics.sh --create --partitions 1 --topic topicx --zookeeper localhost:2181 --replication-factor 3
+
+3) Check hostname in /etc/hosts
+
+4) Choose a new groupid
+
+Optional:
+1) Open Kafka Tools for monitoring cluster
+2) Open Hue for viewing results
+
+
+Commands to run producer and consumer:
+java -jar HdfsProducer.jar localhost:9092 testp-1
+java -jar SparkConsumer.jar 192.168.101.165:9092,192.168.101.165:9093,192.168.101.165:9094 topic11 grp4
+
+
+Known issues:
+1) Addition of partitions in real time not detected
+2) Windowing: This worked with the 0-8 libraries.  https://issues.apache.org/jira/browse/SPARK-19185
+3) Rebalancing partitions when new instances are added.  https://issues.apache.org/jira/browse/SPARK-19547
+
+Improvements:
+SubscribePattern so that all topics coming from similar sources are consumed by the consumer group
+
+
+
+
