@@ -103,13 +103,11 @@ public class SparkConsumer {
 	    	
 	    	//Do Processing
 	    	else{
-	    			/*System.out.println("\n\n----------------------------------Data fetched in the last 30 seconds: " + rdd.partitions().size()
-	    					+ " partitions and " + numHits  + " records------------------\n\n");
-	        */
+	    			
 	    			//Convert to java log object	
 	    			JavaRDD<ApacheAccessLog> logs = rdd.map(x-> x._2)
-	    												.map(ApacheAccessLog::parseFromLogLine)
-	    													.cache();
+					.map(ApacheAccessLog::parseFromLogLine)
+						.cache();
 	        
 	    			//Find the bot ip addresses
 	    			JavaRDD<String> iprdd =  logs.mapToPair(ip-> new Tuple2<>(ip.getIpAddress(),1))
@@ -125,10 +123,9 @@ public class SparkConsumer {
 	    				sc.hadoopConfiguration().set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
 	    				
 	    				String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-	    				//sc.hadoopConfiguration().set("mapreduce.output.basename", timeStamp);
 	    				iprdd.coalesce(1).saveAsTextFile("hdfs://quickstart.cloudera:8020/results/"+timeStamp);
 	    				JobConf jobConf=new JobConf();
-	    				        System.out.println("\n---------"+botIpCount+" Bot Ips were detected---------. \n---------Please see /results for details---------\n");
+	    				        System.out.println("\n---------"+botIpCount+" Bot Ips were detected.--------- \n---------Please see /results for details---------\n");
 	    			}
 	    				
 	    		}        
