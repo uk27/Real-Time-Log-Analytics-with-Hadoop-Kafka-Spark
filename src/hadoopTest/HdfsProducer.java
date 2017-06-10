@@ -21,21 +21,14 @@ import org.apache.hadoop.mapred.*;
 import org.apache.hadoop.util.*;
 public class HdfsProducer {
 
-	 public static File makeFileFromPath(Path some_path, Configuration conf) throws IOException {
-	        FileSystem fs = FileSystem.get(some_path.toUri(), conf);
-	        File temp_data_file = File.createTempFile(some_path.getName(), "");
-	        temp_data_file.deleteOnExit();
-	        fs.copyToLocalFile(some_path, new Path(temp_data_file.getAbsolutePath()));
-	        return temp_data_file;
-	    }
-	 
-	public static void readFromHdfs(Producer<String, String> producer, String topicName) {
+	public static void readFromHdfs(Producer<String, String> producer, String topicName, String fileName) {
 
 		try{
 			//1. Get the instance of Configuration
 			Configuration configuration = new Configuration();
 			//2. URI of the file to be read
-			URI uri = new URI("hdfs://0.0.0.0:8022/data/apache-access-log.txt");
+			//URI uri = new URI("hdfs://0.0.0.0:8022/data/apache-access-log.txt");
+			URI uri = new URI(fileName);
 			//3. Get the instance of the HDFS 
 			FileSystem hdfs = FileSystem.get(uri, configuration);
 			Path pt = new Path(uri);
@@ -44,19 +37,18 @@ public class HdfsProducer {
 			
 			line=br.readLine();
 			int count = 1;
-			while (line != null){
-			//while (line != null && count <10){
+			//while (line != null){
+			while (line != null && count <10){
+				
 				System.out.println("Sending batch" + count);
 				producer.send(new ProducerRecord<String, String>(topicName, new String(line)));
-				//producer.send(new ProducerRecord<String, String>(topicName, new String("hi" + count)));
 				line=br.readLine();
-				count = count+1;
-				
+				count = count+1;				
 			}
 			
 			producer.close();
 		}catch(Exception e){
-			
+			System.out.println(e);
 		}
 	}
 	
@@ -67,6 +59,8 @@ public class HdfsProducer {
 
 				//Assign localhost id
 				props.put("bootstrap.servers", brokers);
+				
+				props.put("auto.create.topics.enable", "true");
 
 				//Set acknowledgements for producer requests.      
 				props.put("acks", "all");
@@ -88,6 +82,8 @@ public class HdfsProducer {
 
 				props.put("value.serializer", 
 						"org.apache.kafka.common.serialization.StringSerializer");
+				
+				props.put("topic.metadata.refresh.interval.ms", "10");
 
 				Producer<String, String> producer = new KafkaProducer
 						<String, String>(props);
@@ -95,22 +91,15 @@ public class HdfsProducer {
 				return producer;
 	}
 
-	public static void main(String[] args) throws Exception{
-
-		
-		// Check arguments length value
-		if(args.length < 2){
-			System.out.println("Usage: HdfsProducer <brokers> <topic>");
-			return;
+	
+	public static void init(String brokers, String topicName, String fileName){
+		try {
+			readFromHdfs(getProducer(brokers, topicName), topicName, fileName);
+			System.out.println("Producer exited normally for "+fileName);
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			System.out.println("Exception while producing messages for "+fileName+"\n" +e);
 		}
-		
-		//Assign topicName to string variable
-		String brokers = args[0];
-		String topicName = args[1].toString();
-		
-		//Get a producer and then use it to read the logs from HDFS
-		readFromHdfs(getProducer(brokers, topicName), topicName);
-		
-		
 	}
 }

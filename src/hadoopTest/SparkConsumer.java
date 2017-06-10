@@ -103,7 +103,7 @@ public class SparkConsumer {
 	    	
 	    	//Do Processing
 	    	else{
-	    			/*System.out.println("\n\n----------------------------------Data fetched in the last 30 seconds: " + rdd.partitions().size()
+	    			/*System.out.println("\n\n---------------------------Data fetched in the last 30 seconds: " + rdd.partitions().size()
 	    					+ " partitions and " + numHits  + " records------------------\n\n");
 	        */
 	    			//Convert to java log object	
@@ -141,4 +141,3 @@ public class SparkConsumer {
 	    jssc.awaitTermination();
 }
 }
-
