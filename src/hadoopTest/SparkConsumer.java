@@ -85,47 +85,46 @@ public class SparkConsumer {
 			long numHits = rdd.count();
 			System.out.println("Number of partitions fetched: " + rdd.partitions().size());
 
-            if(numHits < 1500)
+			if(numHits < 1500)
 				System.out.println("No new data fetched in last 30 sec");
-	    	
-	    	//Do Processing
-	    	else{
 
-	    		//Convert to java log object
-	    		JavaRDD<ApacheAccessLog> logs =
-	    				rdd.map(x-> x._2)
-	    				.map(ApacheAccessLog::parseFromLogLine)
-	    				.cache();
+			//Do Processing
+			else{
 
-	    		//Find the bot ip addresses
-	    		JavaRDD<String> iprdd = 
-	    				logs.mapToPair(ip-> new Tuple2<>(ip.getIpAddress(),1))
-	    				.reduceByKey(MyReducerFunc)
-	    				.filter(botip-> botip._2 > 50)
-	    				.keys();
+				//Convert to java log object
+				JavaRDD<ApacheAccessLog> logs =
+						rdd.map(x-> x._2)
+						.map(ApacheAccessLog::parseFromLogLine)
+						.cache();
 
-	    		//If we find something, we store it in results dir on hdfs
-	    		long botIpCount = iprdd.count();
-	    		if(botIpCount > 0){
+				//Find the bot ip addresses
+				JavaRDD<String> iprdd = 
+						logs.mapToPair(ip-> new Tuple2<>(ip.getIpAddress(),1))
+						.reduceByKey(MyReducerFunc)
+						.filter(botip-> botip._2 > 50)
+						.keys();
 
-	    			//Set file configuration for hdfs
-	    			sc.hadoopConfiguration().set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
-	    			sc.hadoopConfiguration().set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
+				//If we find something, we store it in results dir on hdfs
+				long botIpCount = iprdd.count();
+				if(botIpCount > 0){
 
-	    			//Combine the results and store
-	    			String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-                    iprdd.coalesce(1).saveAsTextFile("hdfs://quickstart.cloudera:8020/results/"+timeStamp);
-	    			System.out.println("\n---------"+botIpCount+" Bot Ips were detected---------");
-	    			System.out.println("\n---------Please see /results for details---------\n");
-	    		}
-	    				
-	    	}        
-	        
-	    });
-	    
-	   
-	    jssc.start();
-	    jssc.awaitTermination();
+					//Set file configuration for hdfs
+					sc.hadoopConfiguration().set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+					sc.hadoopConfiguration().set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
+
+					//Combine the results and store
+					String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+					iprdd.coalesce(1).saveAsTextFile("hdfs://quickstart.cloudera:8020/results/"+timeStamp);
+					System.out.println("\n---------"+botIpCount+" Bot Ips were detected---------");
+					System.out.println("\n---------Please see /results for details---------\n");
+				}
+
+			}
+
+		});
+
+		jssc.start();
+		jssc.awaitTermination();
 	}
-	
+
 }
