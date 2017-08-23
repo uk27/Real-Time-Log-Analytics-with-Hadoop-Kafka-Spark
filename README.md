@@ -1,3 +1,5 @@
+## Log Analytics with Hadoop, Kafka and Spark
+
 ### Overview
 The customer runs a website and periodically is attacked by a botnet in a Distributed Denial of Service (DDOS) attack. We are given a log file in Apache log format from a given attack. Use this log to build a simple real-time detector of DDOS attacks. 
 
